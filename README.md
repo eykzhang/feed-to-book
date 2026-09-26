@@ -8,7 +8,27 @@ The headline number is wire-to-book latency, reported as a distribution (p50, p9
 
 ## Status
 
-Scoped, not built. No code yet.
+Build system, CI, and data tooling are in place. The decoder and order book are not written yet.
+
+## Building
+
+Requires CMake 3.25+, Ninja, and a C++20 compiler. GoogleTest and Google Benchmark are fetched at configure time.
+
+```sh
+cmake --workflow --preset check     # debug build with ASan and UBSan, then run tests
+cmake --preset release && cmake --build --preset release
+./build/release/bench/ftb_bench
+```
+
+## Data
+
+```sh
+tools/fetch_day.py                      # download 2019-01-30 (4.4 GiB) into data/, verify, record sha256
+tools/slice.py --count 100000           # first 100k messages, uncompressed, into data/slices/
+tools/slice.py --until 10:00            # every message before 10:00 ET
+```
+
+Slices are always prefixes of the day, so every order a slice references is added inside it. `data/manifest.json` records each file's size, hash, message count, and last timestamp.
 
 ## Roadmap
 

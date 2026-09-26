@@ -1,0 +1,44 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - { cc: gcc, cxx: g++ }
+          - { cc: clang, cxx: clang++ }
+    name: ${{ matrix.compiler.cxx }}
+    env:
+      CC: ${{ matrix.compiler.cc }}
+      CXX: ${{ matrix.compiler.cxx }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ninja
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+
+      # ASan in older gcc and clang can't map its shadow memory with the
+      # runner kernel's default of 32 random mmap bits.
+      - name: Make room for ASan shadow memory
+        run: sudo sysctl vm.mmap_rnd_bits=28
+
+      - name: Debug with sanitizers, build and test
+        run: cmake --workflow --preset check
+
+      # Native tuning is off because runner CPUs vary between jobs.
+      - name: Release build
+        run: |
+          cmake --preset release -DFTB_NATIVE=OFF
+          cmake --build --preset release
+
+      - name: Bench smoke run
+        run: ./build/release/bench/ftb_bench --benchmark_min_time=0.01s
+
+      - name: Python tools compile
+        run: python3 -m py_compile tools/*.py
