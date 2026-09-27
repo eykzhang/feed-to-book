@@ -1,0 +1,51 @@
+messages 27
+count A 2
+count B 1
+count C 1
+count D 1
+count E 1
+count F 2
+count H 1
+count I 1
+count J 1
+count K 1
+count L 1
+count N 1
+count O 1
+count P 1
+count Q 2
+count R 1
+count S 1
+count U 2
+count V 1
+count W 1
+count X 1
+count Y 1
+count h 1
+msg 0 A locate=4370 tracking=6169 timestamp=34222855299876 order_ref=2749210254799219757 side=Q shares=875902519 stock=ZVZZT price=1111704645
+msg 1 B locate=5141 tracking=6940 timestamp=37534325614119 match_number=2966230773313449776
+msg 2 C locate=5912 tracking=7711 timestamp=40845795928362 order_ref=3183251291827679795 executed_shares=859059510 match_number=4196013711560753217 printable=Q execution_price=1212762699
+msg 3 D locate=6683 tracking=8482 timestamp=44157266242605 order_ref=3400271810341909814
+msg 4 E locate=7454 tracking=9253 timestamp=47468736556848 order_ref=3617292328856139833 executed_shares=960117564 match_number=4630054748589213255
+msg 5 F locate=8225 tracking=10024 timestamp=50780206871091 order_ref=3834312847370369852 side=Q shares=1128547654 stock=ZVZZT price=1364349780 attribution=QRST
+msg 6 H locate=8996 tracking=10795 timestamp=54091677185334 stock=ZVZZT trading_state=Q reason=QRST
+msg 7 I locate=9767 tracking=11566 timestamp=57403147499577 paired_shares=4268353884398829890 imbalance_shares=4774735094265366601 imbalance_direction=Q stock=ZVZZT far_price=1465407834 near_price=1583308897 current_reference_price=1701209960 cross_type=Q price_variation_indicator=Q
+msg 8 J locate=10538 tracking=12337 timestamp=60714617813820 stock=ZVZZT auction_collar_reference_price=1162233672 upper_auction_collar_price=1280134735 lower_auction_collar_price=1398035798 auction_collar_extension=1515936861
+msg 9 K locate=11309 tracking=13108 timestamp=64026088128063 stock=ZVZZT ipo_quotation_release_time=1212762699 ipo_quotation_release_qualifier=Q ipo_price=1448564825
+msg 10 L locate=12080 tracking=13879 timestamp=67337558442306 mpid=QRST stock=ZVZZT primary_market_maker=Q market_maker_mode=Q market_participant_state=Q
+msg 11 N locate=12851 tracking=14650 timestamp=70649028756549 stock=ZVZZT interest_flag=Q
+msg 12 O locate=13622 tracking=15421 timestamp=73960499070792 stock=ZVZZT open_eligibility_status=Q minimum_allowable_price=1482250843 maximum_allowable_price=1600151906 near_execution_price=1718052969 near_execution_time=7885362526302663540 lower_price_range_collar=1953855095 upper_price_range_collar=2071756158
+msg 13 P locate=14393 tracking=16192 timestamp=77271969385035 order_ref=5570476995484210004 side=Q shares=1532779870 stock=ZVZZT price=1768581996 match_number=8102383044816893559
+msg 14 Q locate=15164 tracking=16963 timestamp=80583439699278 shares=5787497513998440023 stock=ZVZZT cross_price=1583308897 match_number=7306641143598050156 cross_type=Q
+msg 15 R locate=15935 tracking=17734 timestamp=83894910013521 stock=ZVZZT market_category=Q financial_status_indicator=Q round_lot_size=1751738987 round_lots_only=Q issue_classification=Q issue_sub_type=QR authenticity=Q short_sale_threshold_indicator=Q ipo_flag=Q luld_reference_price_tier=Q etp_flag=Q etp_leverage_factor=656943402 inverse_indicator=Q
+msg 16 S locate=16706 tracking=18505 timestamp=87206380327764 event_code=Q
+msg 17 U locate=17477 tracking=19276 timestamp=90517850642007 original_order_ref=6438559069541130080 new_order_ref=6944940279407666791 shares=1734895978 price=1852797041
+msg 18 V locate=18248 tracking=20047 timestamp=93829320956250 level_1=6655579588055360099 level_2=7161960797921896810 level_3=7668342007788433521
+msg 19 W locate=19019 tracking=20818 timestamp=97140791270493 breached_level=Q
+msg 20 X locate=19790 tracking=21589 timestamp=100452261584736 order_ref=7089620625083820137 cancelled_shares=1768581996
+msg 21 Y locate=20561 tracking=22360 timestamp=103763731898979 stock=ZVZZT reg_sho_action=Q
+msg 22 h locate=21332 tracking=23131 timestamp=107075202213222 stock=ZVZZT market_code=Q operational_halt_action=Q
+msg 23 A locate=65535 tracking=6169 timestamp=86399999999999 order_ref=18446744073709551615 side=S shares=4294967295 stock=ZVZZT price=2147483648
+msg 24 U locate=4370 tracking=6169 timestamp=0 original_order_ref=9223372036854775808 new_order_ref=1 shares=2147483648 price=4294967295
+msg 25 Q locate=4370 tracking=6169 timestamp=34222855299876 shares=9223372036854775809 stock=ZVZZT cross_price=875902519 match_number=4268353884398829890 cross_type=Q
+msg 26 F locate=4370 tracking=6169 timestamp=34222855299876 order_ref=2749210254799219757 side=Q shares=875902519 stock=BRK\x20A\x5C\x00 price=1111704645 attribution=

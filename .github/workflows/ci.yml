@@ -42,3 +42,6 @@ jobs:
 
       - name: Python tools compile
         run: python3 -m py_compile tools/*.py
+
+      - name: Reference decoder tests
+        run: python3 -m unittest discover -s tools

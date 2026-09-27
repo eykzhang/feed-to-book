@@ -8,7 +8,7 @@ The headline number is wire-to-book latency, reported as a distribution (p50, p9
 
 ## Status
 
-Build system, CI, and data tooling are in place. The decoder and order book are not written yet.
+Build system, CI, data tooling, and a Python reference decoder are in place. The C++ decoder and order book are not written yet.
 
 ## Building
 
@@ -27,6 +27,15 @@ tools/fetch_day.py                      # download 2019-01-30 (4.4 GiB) into dat
 tools/slice.py --count 100000           # first 100k messages, uncompressed, into data/slices/
 tools/slice.py --until 10:00            # every message before 10:00 ET
 ```
+
+`tools/itch_ref.py` is a reference decoder in Python. It checks every frame's length against its message type and prints per-type counts plus sampled messages with every field decoded, in a line format the C++ decoder reproduces so the two can be compared with `diff`. The format is documented at the top of the script.
+
+```sh
+tools/itch_ref.py data/slices/01302019-first100000.itch --every 1000 -o ref.txt
+tools/itch_ref.py data/01302019.NASDAQ_ITCH50.gz --every 0     # per-type counts for the full day
+```
+
+`tests/data/all_types.itch` is a synthetic fixture with one message of every ITCH 5.0 type plus unsigned and escaping edge cases, and `all_types.ref` is its reference output. `tools/make_fixture.py` regenerates both, and CI checks they are current.
 
 Slices are always prefixes of the day, so every order a slice references is added inside it. `data/manifest.json` records each file's size, hash, message count, and last timestamp.
 
