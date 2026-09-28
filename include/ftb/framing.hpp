@@ -2,8 +2,28 @@
 #include <cstddef>
 #include <cstdint>
 #include <span>
+#include <filesystem>
 
 namespace ftb {
+
+    class MappedFile {
+    public:
+        explicit MappedFile(const std::filesystem::path& path);
+        ~MappedFile();
+
+        MappedFile(const MappedFile&) = delete;
+        MappedFile& operator=(const MappedFile&) = delete;
+        MappedFile(MappedFile&& other) noexcept;
+        MappedFile& operator=(MappedFile&& other) noexcept;
+
+        std::span<const std::uint8_t> bytes() const noexcept { return {data_, size_}; }
+
+    private:
+        void release() noexcept;
+        
+        const std::uint8_t* data_ = nullptr;
+        std::size_t size_ = 0;
+    };
 
     template <class F>
     std::size_t frame(std::span<const std::uint8_t> buf, F&& on_payload) {

@@ -2,6 +2,8 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
@@ -10,6 +12,8 @@
 #include <span>
 #include <sstream>
 #include <string>
+#include <system_error>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -49,6 +53,35 @@ std::string reference_types(const fs::path& ref) {
     if (fields >> tag >> index >> type && tag == "msg") types += type;
   }
   return types;
+}
+
+// Total message count and per-type counts from the header of a reference
+// file written by tools/itch_ref.py, indexed by type byte.
+struct RefCounts {
+  std::size_t messages = 0;
+  std::array<std::size_t, 256> by_type{};
+};
+
+RefCounts reference_counts(const fs::path& ref) {
+  std::ifstream in(ref);
+  RefCounts c;
+  std::string line;
+  while (std::getline(in, line)) {
+    std::istringstream fields(line);
+    std::string tag;
+    fields >> tag;
+    if (tag == "messages") {
+      fields >> c.messages;
+    } else if (tag == "count") {
+      char type = 0;
+      std::size_t n = 0;
+      fields >> type >> n;
+      c.by_type[static_cast<unsigned char>(type)] = n;
+    } else {
+      break;  // counts come first; the rest is sampled messages
+    }
+  }
+  return c;
 }
 
 // Hand-built buffers: return value, payload count, and payload contents.
@@ -151,18 +184,109 @@ TEST(Frame, FixtureCutAtEveryByte) {
   }
 }
 
+// MappedFile.
+
+TEST(MappedFile, BytesMatchFileContents) {
+  const fs::path path = kTestData / "all_types.itch";
+  ftb::MappedFile f(path);
+  Bytes want = read_file(path);
+  ASSERT_EQ(f.bytes().size(), want.size());
+  EXPECT_TRUE(std::equal(want.begin(), want.end(), f.bytes().begin()));
+}
+
+TEST(MappedFile, MissingFileThrows) {
+  EXPECT_THROW(ftb::MappedFile(kTestData / "does_not_exist.itch"), std::system_error);
+}
+
+TEST(MappedFile, MissingFileMessageNamesCallAndPath) {
+  try {
+    ftb::MappedFile f(kTestData / "does_not_exist.itch");
+    FAIL() << "expected std::system_error";
+  } catch (const std::system_error& e) {
+    EXPECT_EQ(e.code(), std::errc::no_such_file_or_directory);
+    std::string what = e.what();
+    EXPECT_NE(what.find("open"), std::string::npos) << what;
+    EXPECT_NE(what.find("does_not_exist.itch"), std::string::npos) << what;
+  }
+}
+
+TEST(MappedFile, EmptyFileGivesEmptyBytes) {
+  const fs::path path = fs::temp_directory_path() / "ftb_empty_file_test.itch";
+  { std::ofstream create(path, std::ios::binary | std::ios::trunc); }
+  ASSERT_TRUE(fs::exists(path));
+  ASSERT_EQ(fs::file_size(path), 0u);
+
+  {
+    ftb::MappedFile f(path);
+    EXPECT_TRUE(f.bytes().empty());
+  }
+  fs::remove(path);
+}
+
+TEST(MappedFile, MoveConstructorTransfersMapping) {
+  ftb::MappedFile a(kTestData / "all_types.itch");
+  const std::uint8_t* data = a.bytes().data();
+
+  ftb::MappedFile b(std::move(a));
+  EXPECT_EQ(b.bytes().data(), data);
+  EXPECT_EQ(b.bytes().size(), 899u);
+  EXPECT_TRUE(a.bytes().empty());  // NOLINT(bugprone-use-after-move): checking the moved-from state
+}
+
+TEST(MappedFile, MoveAssignmentTransfersMapping) {
+  ftb::MappedFile a(kTestData / "all_types.itch");
+  ftb::MappedFile b(kTestData / "all_types.ref");
+  const std::uint8_t* data = a.bytes().data();
+
+  b = std::move(a);  // b's old mapping is released here
+  EXPECT_EQ(b.bytes().data(), data);
+  EXPECT_EQ(b.bytes().size(), 899u);
+  EXPECT_TRUE(a.bytes().empty());  // NOLINT(bugprone-use-after-move)
+}
+
+TEST(MappedFile, MoveAssignmentIntoEmpty) {
+  ftb::MappedFile a(kTestData / "all_types.itch");
+  ftb::MappedFile b(kTestData / "all_types.itch");
+  ftb::MappedFile c(std::move(b));  // b is now empty
+
+  b = std::move(a);  // nothing to release in b
+  EXPECT_EQ(b.bytes().size(), 899u);
+}
+
 // Real data. data/ is local only, so these skip in CI.
+
+// Frames a whole slice and checks the total and per-type counts against the
+// reference decoder. Per-type counts only read each payload's first byte, but
+// a framing error of even one byte would scramble them.
+void check_slice(const fs::path& slice, const fs::path& ref, std::size_t bytes) {
+  ftb::MappedFile f(slice);
+  ASSERT_EQ(f.bytes().size(), bytes);  // data/manifest.json
+
+  RefCounts want = reference_counts(ref);
+  ASSERT_GT(want.messages, 0u) << ref << " missing or empty";
+
+  RefCounts got;
+  std::size_t consumed = ftb::frame(f.bytes(), [&](std::span<const std::uint8_t> payload) {
+    ++got.messages;
+    if (!payload.empty()) ++got.by_type[payload[0]];
+  });
+  EXPECT_EQ(consumed, f.bytes().size());
+  EXPECT_EQ(got.messages, want.messages);
+  for (std::size_t t = 0; t < want.by_type.size(); ++t) {
+    EXPECT_EQ(got.by_type[t], want.by_type[t]) << "type '" << static_cast<char>(t) << "'";
+  }
+}
 
 TEST(Frame, Slice100k) {
   const fs::path slice = kRepoData / "slices" / "01302019-first100000.itch";
   if (!fs::exists(slice)) GTEST_SKIP() << slice << " not present";
-  Bytes b = read_file(slice);
-  ASSERT_EQ(b.size(), 2852306u);  // data/manifest.json
+  check_slice(slice, kRepoData / "ref" / "01302019-first100000.every1000.ref", 2852306u);
+}
 
-  std::size_t count = 0;
-  std::size_t consumed = ftb::frame(b, [&](std::span<const std::uint8_t>) { ++count; });
-  EXPECT_EQ(consumed, b.size());
-  EXPECT_EQ(count, 100000u);
+TEST(Frame, SliceUntil10am) {
+  const fs::path slice = kRepoData / "slices" / "01302019-until100000.itch";
+  if (!fs::exists(slice)) GTEST_SKIP() << slice << " not present";
+  check_slice(slice, kRepoData / "ref" / "01302019-until100000.every1000.ref", 1490615266u);
 }
 
 }  // namespace
